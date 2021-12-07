@@ -33,6 +33,30 @@
     
     {%if clen == 0%}
     <h2>当前停车场中不存在车辆<br>空车位：{{last}}</h2>
+    <form method="post">
+        <div class="input-group">
+          <div class="input-control search-box search-box has-icon-left has-icon-right search-example" id="searchcartext">
+            
+            <input id="carnum" type="text" class="form-control search-input"  placeholder="如：桂A.66666" name="carnum">
+            <label for="carnum" class="input-control-icon-left search-icon">
+                <i class="icon icon-chevron-right"></i>
+            </label>
+          </div>
+
+          <span class="input-group-btn">
+            <input class="btn btn-primary" type="submit" name="parkcar" value="停车"></input>
+          </span>
+          
+          <span class="input-group-btn container">
+                <input class="btn btn-primary " type="submit" name="getcar" value="取车">
+          </span>          
+
+          <!-- 跳转到日志页面 -->
+          <span class="input-group-btn container">
+                <input class="btn btn-primary " type="submit" name="tolog" value="日志">
+          </span>
+        </div>
+    </form>
     {% endif %}
 
 
