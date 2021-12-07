@@ -70,6 +70,7 @@
     </form>
     <br>
 
+{% if alllen %}
     <!-- 数据表单 -->
     <table id="cartable" class="table table-bordered" style="background-color: #4b5154;text-align: center;">  
         <form method="post" class="container">  <!-- 指定提交方法为 POST -->
@@ -91,7 +92,7 @@
             {% endfor %}
         </tbody>
     </table>
-
+{% endif %}
 <br>
 
 
