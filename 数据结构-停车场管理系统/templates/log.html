@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ user.name }}的停车场</title>
+    <!-- zui -->
+    <link href="{{ url_for('static', filename='css/zui.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/zui-theme.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='lib/datagrid/zui.datagrid.min.css') }}" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='images/ico.png') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='login/styles.css') }}">
+
+</head>
+<body>
+
+<div class="container">
+    <h1>
+    <img alt="picturl1" src="{{ url_for('static', filename='images/avatar.jpg') }}" height="50" width="50">
+    {{ user.name }}的停车场
+    </h1>
+</div>
+
+<!-- flash消息 -->
+{% for message in get_flashed_messages() %}
+    <div class="container alert alert-primary with-icon">
+        <i class="icon-hand-right"></i>
+        <div class="content">{{ message }}</div>
+    </div>
+{% endfor %}
+
+
+<!-- 数据表格 -->
+<div class="container">
+    <h2>停车场的出入记录共：{{ pagination.total }} 条</h2>
+
+
+    <!-- 搜索框 -->
+    <form method="post">
+        <div class="input-group">
+          <div class="input-control search-box search-box has-icon-left has-icon-right search-example" id="searchcartext">
+            
+            <input id="searchcar" type="text" class="form-control search-input" placeholder="搜索" name="searchcarnum" id="searchcarnum">
+            <label for="searchcar" class="input-control-icon-left search-icon">
+                <i class="icon icon-search"></i>
+            </label>
+          </div>
+
+          <span class="input-group-btn">
+            <input class="btn btn-primary" type="submit" name="searchcarb" value="搜索"></input>
+          </span>
+
+          <span class="input-group-btn container">
+            <input class="btn btn-primary" type="submit" name="help" value="查询帮助">
+            <input class="btn btn-primary" type="submit" name="backindex" value="返回主页">
+            <input class="btn btn-primary" type="submit" name="dellog" value="清空记录">
+          </span>
+        </div>
+    </form>
+    <br>
+
+<!-- 数据表单 -->
+    <table id="cartable" class="table table-bordered" style="background-color: #4b5154;text-align: center;">  
+        <form method="post" class="container">  <!-- 指定提交方法为 POST -->
+            <thead>
+                <tr>
+                    <th style="color:#f9f9f9;text-align: center;background-color: #8666b8;">序号<i class="icon icon-sort"></i></th>
+                    <th style="color:#f9f9f9;text-align: center;background-color: #8666b8;">车牌号<i class="icon icon-sort"></i></th>
+                    <th style="color:#f9f9f9;text-align: center;background-color: #8666b8;">停车时间<i class="icon icon-sort"></i></th>
+                    <th style="color:#f9f9f9;text-align: center;background-color: #8666b8;">状态<i class="icon icon-sort"></i></th>
+                </tr>
+            </thead>
+        </form>
+        <tbody>
+            {% for pcar in pagination.items %}
+            <tr>
+                <td style="color:#f9f9f9;">{{ pcar.id }}</td>
+                <td style="color:#f9f9f9;">{{ pcar.carnum }}</td>
+                <td style="color:#f9f9f9;">{{ pcar.time }}</td>
+                <td style="color:#f9f9f9;">{{ pcar.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+{%if flag%}
+    <form method="post">
+        <div class="input-group" >
+          <div class="input-control search-box search-box has-icon-left has-icon-right search-example" style="width: 0px;" id="searchcartext">
+          </div>
+
+        <span class="btn btn-primary">
+            当前页数：{{ pagination.page }}
+        </span>     
+    {% if pagination.pages > 1 %}
+          <span class="input-group-btn container">
+            {% if pagination.has_prev %}
+                <a href="/log?page={{ pagination.prev_num }}" class="btn btn-primary" style="color: #f9f9f9">上一页</a>
+            {% endif %}
+            页码：
+            {% for i in pagination.iter_pages() %}
+                <a href="/log?page={{ i }}" class="btn btn-primary" style="color: #f9f9f9">{{ i }}</a>
+            {% endfor %}
+
+            {% if pagination.has_next %}
+                <a href="/log?page={{ pagination.next_num }}" class="btn btn-primary" style="color: #f9f9f9">下一页</a>
+            {% endif %}
+          </span>
+    {% endif %}        
+        </div>
+    </form>
+{% endif %}
+<br>
+
+<script> 
+// 初始化搜索框，并在选项中指定搜索文本变更事件回调函数，这样当搜索框文本发送变化时获得通知。
+$('#searchcar').searchBox({
+    escToClear: true, // 设置点击 ESC 键清空搜索框
+    onSearchChange: function(searchKey, isEmpty) {
+        console.log('搜索框文本变更：', searchKey);
+    }
+});
+</script>
+<script src="static/lib/datagrid/zui.datagrid.min.js"></script>
+<!-- 页脚 -->
+<footer class="container">
+    <small>author：<a href="http://na0h.cn"><strong>Na0H</strong></a></small>
+</footer>
+</body>
+</html>
+
