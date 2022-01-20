@@ -45,6 +45,7 @@ login_manager.login_message = ""
 @app.cli.command()
 @click.option('--drop', is_flag=True, help='Create after drop.')
 def initdb(drop):
+    # flask initdb --drop
     """Initialize the database."""
     if drop:
         db.drop_all()
@@ -77,8 +78,8 @@ def forge():
         parlog = ParkLog(carnum=ctcarn(), status=s[random.randint(0, 1)], time=datetime.datetime.now().replace(microsecond=0))
         db.session.add(parlog)
 
-    name = 'Na0H'
-    user = User(name=name)
+    user = User(username='admin', name='Admin')
+    user.set_password('admin123')  # 设置密码
     db.session.add(user)
     db.session.commit()
     click.echo('Done.')
