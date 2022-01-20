@@ -9,6 +9,7 @@
     <link href="{{ url_for('static', filename='lib/datagrid/zui.datagrid.min.css') }}" rel="stylesheet">
     <link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='images/ico.png') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='login/styles.css') }}">
+	<!-- index.html -->
 </head>
 <body>
 
@@ -56,6 +57,10 @@
                 <input class="btn btn-primary " type="submit" name="tolog" value="日志">
           </span>
 
+          <span class="input-group-btn container">
+                <input class="btn btn-primary " type="submit" name="logout" value="登出">
+          </span>
+
         </div>
     </form>
     {% endif %}
@@ -91,6 +96,10 @@
           <!-- 跳转到日志页面 -->
           <span class="input-group-btn container">
                 <input class="btn btn-primary " type="submit" name="tolog" value="日志">
+          </span>
+
+          <span class="input-group-btn container">
+                <input class="btn btn-primary " type="submit" name="logout" value="登出">
           </span>
         </div>
     </form>
@@ -216,7 +225,8 @@ $('#searchcar').searchBox({
 
 <!-- 页脚 -->
 <footer class="container">
-    <small>author：<a href="http://na0h.cn"><strong>Na0H</strong></a></small>
+    <small>author：
+<a href="http://na0h.cn"><strong>Na0H</strong></a></small>
 </footer>
 </body>
 </html>
