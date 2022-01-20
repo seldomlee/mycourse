@@ -1,5 +1,7 @@
 #-- coding:UTF-8 --
 # author: Na0h
+# app.py
+
 
 import os
 import sys
@@ -10,7 +12,8 @@ import random
 import click
 from flask import request, Flask, render_template, url_for, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # SQLite URI compatible
 WIN = sys.platform.startswith('win')
@@ -27,6 +30,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+
+login_manager = LoginManager(app) # 实例化扩展类
+
+@login_manager.user_loader
+def load_user(user_id):  # 创建用户加载回调函数，接受用户 ID 作为参数
+    user = User.query.get(int(user_id))  # 用 ID 作为 User 模型的主键查询对应的用户
+    return user  # 返回用户对象
+
+login_manager.login_view = 'login'
+login_manager.login_message = ""
+# ================================command=====================================
 
 @app.cli.command()
 @click.option('--drop', is_flag=True, help='Create after drop.')
@@ -80,11 +94,41 @@ def aa():
         num = str[random.randint(0, 21)] + str1[random.randint(0, 25)] + "." + "".join(random.sample(str2, 5))
         click.echo(num)
 
+# 创建admin用户
+@app.cli.command()
+@click.option('--username', prompt=True, help='The username used to login.')
+@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='The password used to login.')
+def admin(username, password):
+    """Create user."""
+    db.create_all()
 
-# 数据库类
-class User(db.Model):
+    user = User.query.first()
+    if user is not None:
+        click.echo('Updating user...')
+        user.username = username
+        user.set_password(password)  # 设置密码
+    else:
+        click.echo('Creating user...')
+        user = User(username=username, name='Admin')
+        user.set_password(password)  # 设置密码
+        db.session.add(user)
+
+    db.session.commit()  # 提交数据库会话
+    click.echo('Done.')
+
+
+# ================================类=====================================
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
+    username = db.Column(db.String(20))
+    password_hash = db.Column(db.String(128))
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def validate_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 
 class Car(db.Model):
@@ -106,12 +150,13 @@ class ParkLog(db.Model):
     time = db.Column(db.DateTime)
 
 
+# ================================方法=====================================
+
 def inpavement(carnum):
     car = WaitCar(carnum=carnum, time=datetime.datetime.now().replace(microsecond=0))
     db.session.add(car)
     db.session.commit()
     # flash('车牌号为：' + car.carnum + ' 的车辆已进入便道等待')
-
 
 # 检测是否还有等待的车辆，有则将其放入停车场
 def chepavement(maxc):
@@ -155,9 +200,11 @@ def checkcarn(carnum):
                 return False
     return True
 
+# ================================页面=====================================
 
 # 主页
 @app.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
     maxc = 10    # 定义停车场最大车辆数
     page1 = int(request.args.get('page1', 1))
@@ -179,6 +226,7 @@ def index():
         action2 = request.form.get('getcar')
         action3 = request.form.get('tolog')
         action4 = request.form.get('searchcarb')
+        action5 = request.form.get('logout')
 
         # 停车
         if action1:
@@ -255,6 +303,9 @@ def index():
             flash('停车场中不存在该车辆')  # 显示错误提示
             return redirect(url_for('index'))  # 重定向回主页
 
+        elif action5:
+            return redirect(url_for('logout'))
+
     user = User.query.first()
     cars = Car.query.paginate(page1, per_page=5, error_out=False)
     wcars = WaitCar.query.paginate(page2, per_page=5, error_out=False)
@@ -271,6 +322,7 @@ def index():
 
 
 @app.route("/log", methods=['GET', 'POST'])
+@login_required
 def log():
     flag = 1
     page = int(request.args.get('page', 1))
@@ -313,7 +365,8 @@ def log():
         # 清空记录
         elif adelalog:
             parlog = ParkLog.query.order_by(ParkLog.status).all()
-            if searchcarn == 'youknow':
+            if check_password_hash(User.query.first().password_hash, searchcarn):
+                # 检查输入框中字符和用户密码的哈希值是否相等
                 flash('密码正确，删除所有出入记录')
                 for m in parlog:
                     db.session.delete(m)
@@ -324,6 +377,36 @@ def log():
                 return redirect(url_for('log'))
 
     return render_template('log.html', user=User.query.first(), pagination=pagination, flag=flag)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        if not username or not password:
+            flash('错误的输入')
+            return redirect(url_for('login'))
+
+        user = User.query.first()
+        # 验证用户名和密码是否一致
+        if username == user.username and user.validate_password(password):
+            login_user(user)  # 登入用户
+            flash('登录成功~')
+            return redirect(url_for('index'))  # 重定向到主页
+
+        flash('无效的用户名或密码')  # 如果验证失败，显示错误消息
+        return redirect(url_for('login'))  # 重定向回登录页面
+
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required  # 用于视图保护，后面会详细介绍
+def logout():
+    logout_user()  # 登出用户
+    # flash('请登录~')
+    return redirect(url_for('index'))  # 重定向回首页
+
 
 if __name__ =="__main__":
     app.run(debug=True, port=8080)
